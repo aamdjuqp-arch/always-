@@ -7,6 +7,8 @@ export interface Country {
   flag: string;
   primaryColor: string;
   secondaryColor: string;
+  phoneCode: string;
+  phonePlaceholder: string;
 }
 
 export const COUNTRIES: Country[] = [
@@ -19,6 +21,8 @@ export const COUNTRIES: Country[] = [
     flag: "🇸🇦",
     primaryColor: "hsl(210 95% 50%)",
     secondaryColor: "hsl(140 70% 45%)",
+    phoneCode: "+966",
+    phonePlaceholder: "5X XXX XXXX",
   },
   {
     code: "AE",
@@ -29,6 +33,8 @@ export const COUNTRIES: Country[] = [
     flag: "🇦🇪",
     primaryColor: "hsl(0 75% 45%)",
     secondaryColor: "hsl(140 65% 40%)",
+    phoneCode: "+971",
+    phonePlaceholder: "50 XXX XXXX",
   },
   {
     code: "KW",
@@ -39,6 +45,8 @@ export const COUNTRIES: Country[] = [
     flag: "🇰🇼",
     primaryColor: "hsl(210 85% 50%)",
     secondaryColor: "hsl(140 70% 45%)",
+    phoneCode: "+965",
+    phonePlaceholder: "9XXXXXXX",
   },
   {
     code: "QA",
@@ -49,6 +57,8 @@ export const COUNTRIES: Country[] = [
     flag: "🇶🇦",
     primaryColor: "hsl(350 85% 40%)",
     secondaryColor: "hsl(40 90% 55%)",
+    phoneCode: "+974",
+    phonePlaceholder: "XXXX XXXX",
   },
   {
     code: "OM",
@@ -59,6 +69,8 @@ export const COUNTRIES: Country[] = [
     flag: "🇴🇲",
     primaryColor: "hsl(0 80% 50%)",
     secondaryColor: "hsl(140 65% 40%)",
+    phoneCode: "+968",
+    phonePlaceholder: "9XXXXXXX",
   },
   {
     code: "BH",
@@ -69,6 +81,8 @@ export const COUNTRIES: Country[] = [
     flag: "🇧🇭",
     primaryColor: "hsl(0 85% 50%)",
     secondaryColor: "hsl(0 0% 95%)",
+    phoneCode: "+973",
+    phonePlaceholder: "XXXX XXXX",
   },
 ];
 

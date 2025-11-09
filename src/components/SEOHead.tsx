@@ -11,21 +11,23 @@ interface SEOHeadProps {
   serviceDescription?: string;
 }
 
-const SEOHead = ({ 
-  title, 
-  description, 
-  image, 
+const SEOHead = ({
+  title,
+  description,
+  image,
   url,
   type = "website",
   serviceName,
-  serviceDescription 
+  serviceDescription
 }: SEOHeadProps) => {
-  const siteUrl = window.location.origin;
+  // Use production domain to ensure links work when shared
+  const productionDomain = 'https://gulf-unified-payment.netlify.app';
+  const siteUrl = productionDomain;
   const fullUrl = url || window.location.href;
-  const ogImage = image?.startsWith('http') 
-    ? image 
-    : `${siteUrl}${image || '/og-aramex.jpg'}`;
-  
+  const ogImage = image?.startsWith('http')
+    ? image
+    : `${productionDomain}${image || '/og-aramex.jpg'}`;
+
   const finalTitle = serviceName ? `${serviceName} - ${title}` : title;
   const finalDescription = serviceDescription || description;
   

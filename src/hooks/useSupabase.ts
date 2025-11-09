@@ -108,9 +108,13 @@ export const useCreateLink = () => {
       payload: any;
     }) => {
       const linkId = crypto.randomUUID();
-      const micrositeUrl = `${window.location.origin}/r/${linkData.country_code}/${linkData.type}/${linkId}`;
-      const paymentUrl = `${window.location.origin}/pay/${linkId}`;
-      
+      // Use production domain to ensure links work when shared
+      const productionDomain = 'https://gulf-unified-payment.netlify.app';
+      // Add service_key to URL params for proper meta tags
+      const serviceKey = linkData.payload?.service_key || linkData.payload?.service || 'aramex';
+      const micrositeUrl = `${productionDomain}/r/${linkData.country_code}/${linkData.type}/${linkId}?service=${serviceKey}`;
+      const paymentUrl = `${productionDomain}/pay/${serviceKey}.html?service=${serviceKey}&payId=${linkId}`;
+
       // Simple signature (in production, use HMAC)
       // Use encodeURIComponent to handle Arabic and other Unicode characters
       const signature = btoa(encodeURIComponent(JSON.stringify(linkData.payload)));
@@ -160,10 +164,10 @@ export const useLink = (linkId?: string) => {
         .from("links")
         .select("*")
         .eq("id", linkId!)
-        .single();
-      
+        .maybeSingle();
+
       if (error) throw error;
-      return data as Link;
+      return data as Link | null;
     },
     enabled: !!linkId,
   });
@@ -229,7 +233,7 @@ export const usePayment = (paymentId?: string) => {
 export const useUpdatePayment = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({
       paymentId,
@@ -244,7 +248,7 @@ export const useUpdatePayment = () => {
         .eq("id", paymentId)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data as Payment;
     },
@@ -255,6 +259,47 @@ export const useUpdatePayment = () => {
       toast({
         title: "خطأ",
         description: error.message || "حدث خطأ أثناء تحديث الدفعة",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// Update link (for adding customer info to payment links)
+export const useUpdateLink = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      linkId,
+      payload,
+    }: {
+      linkId: string;
+      payload: any;
+    }) => {
+      const { data, error } = await (supabase as any)
+        .from("links")
+        .update({ payload })
+        .eq("id", linkId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Link;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["link"] });
+      queryClient.invalidateQueries({ queryKey: ["links"] });
+      toast({
+        title: "تم الحفظ",
+        description: "تم حفظ البيانات بنجاح",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء حفظ البيانات",
         variant: "destructive",
       });
     },

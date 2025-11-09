@@ -207,7 +207,8 @@ exports.handler = async (event, context) => {
   
   // Try to get link data from database first
   const linkData = await getLinkData(id);
-  
+  console.log('Retrieved link data:', JSON.stringify(linkData, null, 2));
+
   // For payment pages, get country and type from link data if available
   if (linkData?.country_code) {
     countryCode = linkData.country_code;
@@ -216,7 +217,7 @@ exports.handler = async (event, context) => {
       country = linkCountry;
     }
   }
-  
+
   if (linkData?.type) {
     type = linkData.type;
   }
@@ -318,11 +319,11 @@ exports.handler = async (event, context) => {
     }
   } catch (error) {
     console.error('Could not read index.html:', error);
-    // Fallback: Use current build's asset filenames (from dist/index.html we saw earlier)
-    // These will work if the build structure is consistent
-    scriptTag = '<script type="module" crossorigin src="/assets/index-BZCOhTKg.js"></script>';
-    styleTag = '<link rel="stylesheet" crossorigin href="/assets/index-DN9Pz8ru.css">';
-    
+    // Fallback: Use current build's asset filenames
+    // Updated: 2025-11-09
+    scriptTag = '<script type="module" crossorigin src="/assets/index-DzQfBceo.js"></script>';
+    styleTag = '<link rel="stylesheet" crossorigin href="/assets/index-B4xNSA_N.css">';
+
     // If those don't work, add a fallback script that tries multiple patterns
     scriptTag += `
     <script>

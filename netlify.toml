@@ -1,6 +1,17 @@
 [build]
   publish = "dist"
   command = "npm run build"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/r/*"
+  to = "/.netlify/functions/microsite-meta"
+  status = 200
+
+[[redirects]]
+  from = "/pay/*"
+  to = "/.netlify/functions/microsite-meta"
+  status = 200
 
 [[redirects]]
   from = "/*"

